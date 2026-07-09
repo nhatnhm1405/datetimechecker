@@ -19,6 +19,8 @@
 
     <properties>
         <java.version>17</java.version>
+        <!-- Lab 4: class demo defect bị loại khỏi `mvn test` mặc định, chỉ chạy qua -Plab04 -->
+        <lab04.excludes>**/DayInMonthDefectDemoTest.java</lab04.excludes>
     </properties>
 
     <dependencies>
@@ -47,6 +49,39 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Mặc định: bỏ qua class demo defect của Lab 4 -->
+                    <excludes>
+                        <exclude>${lab04.excludes}</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- ./mvnw test -Plab04  -> CHỈ chạy class demo defect (cố ý FAIL 4 case DFID001..004) -->
+        <profile>
+            <id>lab04</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.self="override"/>
+                            <includes>
+                                <include>**/DayInMonthDefectDemoTest.java</include>
+                            </includes>
+                            <!-- Cắt stack trace dài để output demo gọn, dễ chụp báo cáo -->
+                            <trimStackTrace>true</trimStackTrace>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
