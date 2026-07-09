@@ -47,6 +47,41 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Mặc định: bỏ qua các class demo defect của Lab 4 (chỉ chạy qua -Plab04) -->
+                    <excludes>
+                        <exclude>**/UnitTestDefect.java</exclude>
+                        <exclude>**/SystemTestDefect.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- ./mvnw test -Plab04  -> CHỈ chạy class demo defect (cố ý FAIL 4 case DFID001..004) -->
+        <profile>
+            <id>lab04</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes combine.self="override"/>
+                            <includes>
+                                <include>**/UnitTestDefect.java</include>
+                                <include>**/SystemTestDefect.java</include>
+                            </includes>
+                            <!-- Cắt stack trace dài để output demo gọn, dễ chụp báo cáo -->
+                            <trimStackTrace>true</trimStackTrace>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

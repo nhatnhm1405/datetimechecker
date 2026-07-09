@@ -11,3 +11,6 @@ mobile_app/build/
 mobile_app/.dart_tool/
 mobile_app/.flutter-plugins
 mobile_app/.flutter-plugins-dependencies
+
+# Bản backup .xls tạo trước khi chỉnh sửa (Lab 4) — không commit
+*.BACKUP.xls
