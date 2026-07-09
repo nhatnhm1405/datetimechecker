@@ -19,8 +19,6 @@
 
     <properties>
         <java.version>17</java.version>
-        <!-- Lab 4: class demo defect bị loại khỏi `mvn test` mặc định, chỉ chạy qua -Plab04 -->
-        <lab04.excludes>**/DayInMonthDefectDemoTest.java</lab04.excludes>
     </properties>
 
     <dependencies>
@@ -53,9 +51,10 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- Mặc định: bỏ qua class demo defect của Lab 4 -->
+                    <!-- Mặc định: bỏ qua các class demo defect của Lab 4 (chỉ chạy qua -Plab04) -->
                     <excludes>
-                        <exclude>${lab04.excludes}</exclude>
+                        <exclude>**/UnitTestDefect.java</exclude>
+                        <exclude>**/SystemTestDefect.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -74,7 +73,8 @@
                         <configuration>
                             <excludes combine.self="override"/>
                             <includes>
-                                <include>**/DayInMonthDefectDemoTest.java</include>
+                                <include>**/UnitTestDefect.java</include>
+                                <include>**/SystemTestDefect.java</include>
                             </includes>
                             <!-- Cắt stack trace dài để output demo gọn, dễ chụp báo cáo -->
                             <trimStackTrace>true</trimStackTrace>
