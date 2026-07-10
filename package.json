@@ -1,7 +1,7 @@
 {
   "name": "datetimechecker",
   "version": "1.0.0",
-  "description": "",
+  "description": "Spring Boot REST API kiểm tra ngày/tháng/năm hợp lệ theo lịch Gregorian.",
   "main": "playwright.config.js",
   "scripts": {
     "test:e2e": "playwright test --project=\"Desktop Chrome\"",
@@ -22,6 +22,13 @@
   },
   "homepage": "https://github.com/nhatnhm1405/datetimechecker#readme",
   "dependencies": {
-    "@playwright/test": "^1.60.0"
+    "@playwright/test": "^1.60.0",
+    "playwright": "^1.61.1"
+  },
+  "devDependencies": {
+    "@playwright/mcp": "^0.0.77"
+  },
+  "directories": {
+    "doc": "docs"
   }
 }
