@@ -29,9 +29,14 @@
             <input type="text" id="year" class="form-control" placeholder="Year">
         </div>
 
-        <button onclick="check()" class="btn btn-primary w-100">
-            Check
-        </button>
+        <div class="d-flex gap-2">
+            <button id="check" onclick="check()" class="btn btn-primary flex-fill">
+                Check
+            </button>
+            <button id="clear" onclick="clearForm()" class="btn btn-secondary flex-fill">
+                Clear
+            </button>
+        </div>
 
         <p id="result" class="text-center mt-3 fw-semibold"></p>
     </div>
@@ -55,6 +60,17 @@
         result.textContent = data.message;
         result.className = "text-center mt-3 fw-semibold";
         result.style.color = data.valid ? "green" : "red";
+    }
+
+    function clearForm() {
+        document.getElementById("day").value = "";
+        document.getElementById("month").value = "";
+        document.getElementById("year").value = "";
+
+        const result = document.getElementById("result");
+        result.textContent = "";
+        result.className = "text-center mt-3 fw-semibold";
+        result.style.color = "";
     }
 </script>
 

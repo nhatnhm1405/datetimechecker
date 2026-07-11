@@ -16,10 +16,10 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8081
 
 # Healthcheck để docker-compose biết app sẵn sàng trước khi chạy mobile test
 HEALTHCHECK --interval=5s --timeout=3s --retries=30 \
-  CMD wget -qO- http://localhost:8080/ > /dev/null || exit 1
+  CMD wget -qO- http://localhost:8081/ > /dev/null || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

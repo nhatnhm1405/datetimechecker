@@ -10,7 +10,7 @@ Spring Boot REST API kiểm tra ngày/tháng/năm hợp lệ theo lịch Gregori
 ./mvnw spring-boot:run
 ```
 
-Truy cập giao diện: http://localhost:8080
+Truy cập giao diện: http://localhost:8081
 
 ### Chạy bằng Docker
 
@@ -18,20 +18,17 @@ Dockerfile build multi-stage (Maven build ngay trong Docker, không cần JDK tr
 
 ```bash
 docker compose up --build app
-# hoặc: docker build -t datetimechecker . && docker run -p 8080:8080 datetimechecker
+# hoặc: docker build -t datetimechecker . && docker run -p 8081:8081 datetimechecker
 ```
 
-### Mobile testing bằng Docker
+### E2E testing bằng Docker
 
-`docker-compose.yml` có sẵn 2 service test dùng image Playwright chính thức,
-tự chờ app healthy rồi chạy test qua `BASE_URL=http://app:8080`:
+`docker-compose.yml` có sẵn service test dùng image Playwright chính thức,
+tự chờ app healthy rồi chạy desktop E2E qua `BASE_URL=http://app:8081`:
 
 ```bash
 # E2E desktop (Desktop Chrome, 57 case)
 docker compose run --rm e2e-test
-
-# Mobile (iPhone 14 Pro Max emulation, bỏ nhóm Demo canvas)
-docker compose run --rm mobile-test
 ```
 
 ---
@@ -76,7 +73,7 @@ Coverage: chạy parameterized test trên toàn bộ 57 case từ `test-data.jso
 ```bash
 newman run "DateTimeChecker API.postman_collection.json" \
   --iteration-data test-data.json \
-  --env-var "baseUrl=http://localhost:8080"
+  --env-var "baseUrl=http://localhost:8081"
 ```
 
 `test-data.json` (sinh từ `generate-test-data.js`, dùng chung cho mọi loại test trong dự án) chứa 57 test case với các ngày hợp lệ và không hợp lệ — Newman chạy iteration qua toàn bộ tập này.
@@ -109,18 +106,12 @@ slowMo: 1000  // 1 giây giữa mỗi thao tác
 
 Coverage: project **Desktop Chrome** (`test.spec.js`) chạy qua giao diện web với toàn bộ 57 case từ `test-data.json` — cùng bộ dữ liệu chia sẻ với Unit Test và API Test ở trên.
 
-### Chạy riêng theo project (Desktop / Mobile)
+### Chạy desktop E2E
 
-`playwright.config.js` định nghĩa 2 project:
-- **Desktop Chrome** (`e2e/test.spec.js`) — test trang web thường tại `/`
-- **iPhone 14 Pro Max** (`e2e/mobile.spec.js`) — giả lập viewport mobile (430x932, touch) để test app Flutter Web tại `/mobile/index.html`: app load thành công, API trả đúng kết quả từ mobile context, chạy lại tập con test case từ `test-data.json`
+`playwright.config.js` định nghĩa project **Desktop Chrome** (`e2e/test.spec.js`) để test trang web thường tại `/`.
 
 ```bash
 npx playwright test --project="Desktop Chrome"
-npx playwright test --project="iPhone 14 Pro Max"
-
-# Xem trực quan từng thao tác nhập liệu trên canvas Flutter
-npx playwright test --project="iPhone 14 Pro Max" -g "Demo canvas" --headed --workers=1
 ```
 
 ---
@@ -142,23 +133,72 @@ flutter build web
 # copy nội dung build/web/* sang src/main/resources/static/mobile/
 ```
 
-Sau khi Spring Boot chạy, truy cập: http://localhost:8080/mobile/index.html
+Sau khi Spring Boot chạy, truy cập: http://localhost:8081/mobile/index.html
 
 ---
 
-## 5. Mobile UI Flow Test (Maestro)
+## 5. Mobile Automation (BrowserStack)
 
-Mô phỏng thao tác chạm & gõ trực tiếp trên giao diện mobile (`maestro/check-valid-date.yaml`): mở app, nhập ngày/tháng/năm, bấm kiểm tra, chụp ảnh kết quả từng bước — gần với trải nghiệm người dùng thật nhất trong các loại test ở đây.
+Mobile automation chạy trên **BrowserStack Automate** với real iPhone Safari thay vì phụ thuộc iPhone vật lý cá nhân hoặc Playwright mobile emulation trên Windows.
 
-> ⚠️ Tạm thời chưa chạy/test được (chưa setup môi trường Maestro) — flow này mới ở dạng khai báo, chưa được verify thực tế.
+Test hiện tại (`e2e/browserstack-mobile.js`) chạy bằng Selenium WebDriver trên **BrowserStack Automate** và tự bật BrowserStack Local tunnel khi `BASE_URL` là localhost. Script kiểm tra:
+- `/mobile/index.html` load được trên real iPhone Safari.
+- Flutter Web đã render (`flt-glass-pane` và `canvas` xuất hiện).
+- API `/api/datetime/check` trả đúng kết quả cho 15 case đầu trong `test-data.json` từ browser context mobile.
+- BrowserStack dashboard nhận pass/fail status và có screenshot/video phục vụ báo cáo.
 
-### Cài đặt (1 lần)
-Theo hướng dẫn: https://maestro.mobile.dev
+### Cài đặt env
 
-### Chạy (Spring Boot phải đang chạy)
-```bash
-maestro test maestro/check-valid-date.yaml
+Không commit credential vào repo. Có thể điền vào file `.env` local:
+
+```env
+BROWSERSTACK_USERNAME=your_username
+BROWSERSTACK_ACCESS_KEY=your_access_key
+BASE_URL=http://localhost:8081
+BROWSERSTACK_MAX_CASES=15
+BROWSERSTACK_DEVICE=iPhone 15
+BROWSERSTACK_OS_VERSION=17
 ```
+
+Hoặc set bằng PowerShell:
+
+```powershell
+$env:BROWSERSTACK_USERNAME="your_username"
+$env:BROWSERSTACK_ACCESS_KEY="your_access_key"
+```
+
+### Chạy
+
+Spring Boot phải đang chạy tại `http://localhost:8081`. Script tự bật BrowserStack Local tunnel để real device cloud truy cập localhost.
+
+```bash
+npm run test:mobile
+```
+
+Có thể tạo nhanh `.env` từ mẫu:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Có thể đổi device/OS nếu BrowserStack account hỗ trợ:
+
+```powershell
+$env:BROWSERSTACK_DEVICE="iPhone 15"
+$env:BROWSERSTACK_OS_VERSION="17"
+npm run test:mobile
+```
+
+Mặc định mobile BrowserStack chạy 15 case. Có thể đổi số case khi debug:
+
+```powershell
+$env:BROWSERSTACK_MAX_CASES="5"
+npm run test:mobile
+```
+
+Trên GitHub Actions, thêm 2 repository secrets nếu muốn chạy mobile job:
+- `BROWSERSTACK_USERNAME`
+- `BROWSERSTACK_ACCESS_KEY`
 
 ---
 
@@ -219,17 +259,15 @@ datetimechecker/
 ├── e2e/
 │   ├── helpers/test-data.js               ← loader test-data.json dùng chung cho các spec
 │   ├── test.spec.js                       ← Playwright E2E tests (Desktop Chrome)
-│   └── mobile.spec.js                     ← Playwright mobile tests (iPhone 14 Pro Max)
-├── maestro/
-│   └── check-valid-date.yaml              ← Maestro mobile UI flow test
+│   └── browserstack-mobile.js             ← BrowserStack real iPhone Safari smoke/API test
 ├── k6/
 │   └── load-test.js                       ← k6 load tests
 ├── .github/workflows/
 │   └── api-test.yml                       ← CI/CD pipeline
 ├── Dockerfile                             ← multi-stage build (Maven → JRE)
-├── docker-compose.yml                     ← app + e2e-test + mobile-test (Playwright)
+├── docker-compose.yml                     ← app + e2e-test (Playwright desktop)
 ├── DateTimeChecker API.postman_collection.json
 ├── generate-test-data.js                  ← sinh test-data.json
 ├── test-data.json
-└── playwright.config.js                   ← project Desktop Chrome + iPhone 14 Pro Max
+└── playwright.config.js                   ← project Desktop Chrome
 ```

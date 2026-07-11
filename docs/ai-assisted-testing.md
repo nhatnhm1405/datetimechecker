@@ -1,8 +1,9 @@
 # AI-Assisted Testing — Playwright MCP + Cline
 
 Tài liệu này hướng dẫn dùng **Playwright MCP** kết hợp **Cline** (VS Code) để AI tự
-động **sinh test (test generation)**, **tự chữa test khi UI đổi (self-healing)** và
-điều khiển bằng **ngôn ngữ tự nhiên** — 3 năng lực AI-assisted testing.
+động **sinh test (test generation)** và **tự chữa test khi UI đổi (self-healing)**
+cho phần web desktop. Mobile automation của project đã chuyển sang BrowserStack real
+iPhone Safari (`e2e/browserstack-mobile.js`).
 
 Mô hình:
 
@@ -10,7 +11,7 @@ Mô hình:
 VS Code
   └─ Cline (MCP client)  ──── API key: Gemini (hoặc DeepSeek)
          └─ Playwright MCP server (@playwright/mcp)
-                 └─ điều khiển Chromium → app tại http://localhost:8080
+                 └─ điều khiển Chromium → app tại http://localhost:8081
 ```
 
 Không tốn thêm chi phí công cụ: dự án đã có Playwright, MCP server chạy qua `npx`,
@@ -50,22 +51,14 @@ Cline lưu cấu hình MCP ở file `cline_mcp_settings.json` (mở qua Cline �
     "playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest", "--browser", "chromium"]
-    },
-    "playwright-mobile": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--browser", "chromium", "--device", "iPhone 14 Pro Max", "--caps", "vision"]
     }
   }
 }
 ```
 
 - `playwright` — điều khiển trình duyệt desktop (test trang `/`).
-- `playwright-mobile` — giả lập iPhone 14 Pro Max, có `vision` để "nhìn" canvas Flutter
-  tại `/mobile/index.html`.
 
-Bản cấu hình tương ứng cũng có sẵn ở `.vscode/mcp.json` (dùng cho VS Code Copilot agent mode).
-
-Sau khi lưu, Cline sẽ hiện 2 server với danh sách tool (`browser_navigate`, `browser_click`,
+Sau khi lưu, Cline sẽ hiện server với danh sách tool (`browser_navigate`, `browser_click`,
 `browser_type`, `browser_snapshot`...). Bật (enable) chúng.
 
 ## 4. Chạy app trước khi test
@@ -77,7 +70,7 @@ MCP điều khiển trình duyệt thật nên app phải đang chạy:
 # hoặc: docker compose up --build app
 ```
 
-Kiểm tra: http://localhost:8080 và http://localhost:8080/mobile/index.html
+Kiểm tra: http://localhost:8081 và http://localhost:8081/mobile/index.html
 
 ---
 
@@ -85,24 +78,15 @@ Kiểm tra: http://localhost:8080 và http://localhost:8080/mobile/index.html
 
 Trong khung chat Cline, ra lệnh (tiếng Việt được). Ví dụ cho **web desktop**:
 
-> Dùng MCP server `playwright`, mở http://localhost:8080, nhập day=29, month=2,
+> Dùng MCP server `playwright`, mở http://localhost:8081, nhập day=29, month=2,
 > year=2000, bấm nút kiểm tra. Đọc kết quả trên trang. Sau đó sinh cho tôi một file
 > Playwright test `e2e/ai-generated.spec.js` kiểm tra case này là ngày hợp lệ, theo
 > đúng style của `e2e/test.spec.js`.
-
-Ví dụ cho **mobile Flutter Web** (đúng điểm khó của dự án — canvas không có DOM):
-
-> Dùng MCP server `playwright-mobile`, mở http://localhost:8080/mobile/index.html.
-> Chờ Flutter render (`flt-glass-pane`). Dùng vision xem canvas, nhập ngày 31/4/2023
-> bằng cách Tab qua từng ô rồi gõ, bấm Check. Xác nhận app báo ngày KHÔNG hợp lệ.
-> Rồi cập nhật `e2e/mobile.spec.js` thêm case này theo pattern `fillAndCheckOnCanvas`.
 
 AI sẽ tự thao tác trình duyệt qua MCP (bạn xem được từng bước), rồi ghi file spec.
 Chạy lại bằng bộ lệnh có sẵn:
 
 ```bash
-npm run test:mobile        # verify qua API mobile context (nhanh)
-npm run test:mobile:demo   # xem thao tác canvas trực quan
 npx playwright test e2e/ai-generated.spec.js
 ```
 
@@ -111,7 +95,7 @@ npx playwright test e2e/ai-generated.spec.js
 Khi đổi giao diện làm test fail (đổi label nút, đổi id ô input...), đưa log lỗi cho Cline:
 
 > Chạy `npx playwright test e2e/test.spec.js` báo lỗi selector không tìm thấy nút.
-> Dùng MCP server `playwright` mở lại http://localhost:8080, chụp snapshot DOM để tìm
+> Dùng MCP server `playwright` mở lại http://localhost:8081, chụp snapshot DOM để tìm
 > selector đúng của nút kiểm tra bây giờ, rồi sửa lại selector trong `e2e/test.spec.js`
 > cho đúng. Chạy lại để xác nhận pass.
 
@@ -123,12 +107,11 @@ trước khi lưu).
 
 ## 7. Lưu ý & giới hạn
 
-- **App Flutter Web dùng CanvasKit** → không có input DOM. Với mobile phải dùng server
-  `playwright-mobile` có `--caps vision` (cần model có vision như Gemini). DeepSeek
-  không vision nên chỉ hợp phần web desktop / sửa selector dựa trên DOM.
+- **App Flutter Web dùng CanvasKit** → không có input DOM ổn định cho mobile. Mobile
+  automation chính thức chuyển sang BrowserStack real device smoke/API validation.
 - **MCP điều khiển trình duyệt thật** → luôn bật app trước, và chỉ trỏ vào localhost.
 - **Luôn review diff AI sinh ra** trước khi commit. AI sinh test nhanh nhưng có thể
-  assert sai hoặc lệch style; đối chiếu với `e2e/test.spec.js` / `e2e/mobile.spec.js`.
+  assert sai hoặc lệch style; đối chiếu với `e2e/test.spec.js`.
 - **Không đưa API key vào repo.** Key nhập trong Cline, lưu cục bộ.
 - Bộ dữ liệu test dùng chung vẫn là `test-data.json` (sinh từ `generate-test-data.js`).
   Khi nhờ AI thêm case, ưu tiên bảo nó lấy dữ liệu từ đây để nhất quán với các lớp test khác.

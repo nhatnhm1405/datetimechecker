@@ -5,8 +5,8 @@
   "main": "playwright.config.js",
   "scripts": {
     "test:e2e": "playwright test --project=\"Desktop Chrome\"",
-    "test:mobile": "playwright test --project=\"iPhone 14 Pro Max\" --grep-invert \"Demo canvas\"",
-    "test:mobile:demo": "playwright test --project=\"iPhone 14 Pro Max\" -g \"Demo canvas\" --headed --workers=1",
+    "test:mobile": "node e2e/run-browserstack-mobile.js",
+    "test:mobile:browserstack": "node e2e/run-browserstack-mobile.js",
     "generate:test-data": "node generate-test-data.js"
   },
   "repository": {
@@ -21,12 +21,14 @@
     "url": "https://github.com/nhatnhm1405/datetimechecker/issues"
   },
   "homepage": "https://github.com/nhatnhm1405/datetimechecker#readme",
-  "dependencies": {
-    "@playwright/test": "^1.60.0",
-    "playwright": "^1.61.1"
-  },
   "devDependencies": {
-    "@playwright/mcp": "^0.0.77"
+    "@playwright/mcp": "^0.0.77",
+    "@playwright/test": "^1.61.1",
+    "browserstack-local": "^1.5.13",
+    "browserstack-node-sdk": "^1.63.1",
+    "mocha": "^11.7.5",
+    "playwright": "^1.61.1",
+    "selenium-webdriver": "^4.45.0"
   },
   "directories": {
     "doc": "docs"

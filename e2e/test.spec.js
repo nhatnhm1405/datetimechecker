@@ -11,7 +11,7 @@ async function checkDate(page, day, month, year) {
   await page.waitForTimeout(500);
   await page.fill('#year', year);
   await page.waitForTimeout(500);
-  await page.click('button');
+  await page.click('#check');
   await page.waitForTimeout(500);
   return page.locator('#result');
 }

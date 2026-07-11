@@ -6,14 +6,14 @@ Báo cáo phần **System test (black-box — Lab 1)** của Lab 4 cho ứng d�
 ## 1. Đối tượng kiểm thử
 
 - **Đối tượng:** chức năng kiểm tra ngày của app (`DateTimeCheckerService.check(day, month, year)`),
-  test theo góc nhìn hộp đen (black-box) dựa trên các phân vùng dữ liệu trong `test-data.json`
-  và bộ e2e Playwright (`e2e/test.spec.js`, `e2e/mobile.spec.js`).
+  test theo góc nhìn hộp đen (black-box) dựa trên các phân vùng dữ liệu trong `test-data.json`,
+  Playwright desktop (`e2e/test.spec.js`) và BrowserStack mobile (`e2e/browserstack-mobile.js`).
 
 ## 2. Lệnh chạy
 
 ```bash
 npm run test:e2e         # desktop
-npm run test:mobile      # iPhone 14 Pro Max (Flutter web)
+npm run test:mobile      # BrowserStack real iPhone Safari (Flutter web)
 ./mvnw test -Plab04      # demo defect: chạy 15 case -> 11 PASS / 4 FAIL đúng DFID001..004
 ```
 
