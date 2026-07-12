@@ -59,6 +59,16 @@ Test logic validate trực tiếp trong Java, không cần chạy server.
 
 Coverage: chạy parameterized test trên toàn bộ 57 case từ `test-data.json` (day/month/year không phải số, out of range, năm nhuận, tháng thiếu/đủ...) + 4 unit test riêng cho logic `isLeapYear`.
 
+### Lab 4 defect demo
+
+Profile `lab04` chạy các class demo defect cố tình lỗi (`UnitTestDefect` và `SystemTestDefect`) để tái hiện defect report của Lab 4. Lệnh này **kết thúc BUILD FAILURE là đúng chủ đích**, vì các case defect phải fail để chứng minh lỗi.
+
+```bash
+./mvnw test -Plab04
+```
+
+Mặc định `./mvnw test` không chạy các class defect demo này, nên build chính vẫn xanh.
+
 ---
 
 ## 2. API Test (Postman + Newman)
@@ -139,13 +149,39 @@ Sau khi Spring Boot chạy, truy cập: http://localhost:8081/mobile/index.html
 
 ## 5. Mobile Automation (BrowserStack)
 
-Mobile automation chạy trên **BrowserStack Automate** với real iPhone Safari thay vì phụ thuộc iPhone vật lý cá nhân hoặc Playwright mobile emulation trên Windows.
+Mobile automation chạy trên **BrowserStack Automate / Test Reporting** với real iPhone Safari thay vì phụ thuộc iPhone vật lý cá nhân hoặc Playwright mobile emulation trên Windows.
 
-Test hiện tại (`e2e/browserstack-mobile.js`) chạy bằng Selenium WebDriver trên **BrowserStack Automate** và tự bật BrowserStack Local tunnel khi `BASE_URL` là localhost. Script kiểm tra:
-- `/mobile/index.html` load được trên real iPhone Safari.
-- Flutter Web đã render (`flt-glass-pane` và `canvas` xuất hiện).
-- API `/api/datetime/check` trả đúng kết quả cho 15 case đầu trong `test-data.json` từ browser context mobile.
-- BrowserStack dashboard nhận pass/fail status và có screenshot/video phục vụ báo cáo.
+Test hiện tại chạy qua **BrowserStack Node SDK + Mocha** để build hiện trong **BrowserStack Build Runs**. Một lần chạy tạo **1 session/video** trên real iPhone Safari, trong video chạy liên tiếp 15 case đã chọn:
+- Điền `day`, `month`, `year`.
+- Bấm **Check**.
+- Chờ 1 giây để thấy kết quả.
+- Bấm **Clear** rồi chuyển sang case tiếp theo.
+- Assert kết quả theo màu xanh/đỏ của UI.
+
+File chính:
+- `e2e/browserstack-mobile.mocha.js`: định nghĩa bộ 15 mobile UI E2E cases.
+- `e2e/browserstack-mobile.js`: chạy Selenium WebDriver trên BrowserStack.
+- `e2e/run-browserstack-mobile.js`: sinh `browserstack.yml` tạm thời và chạy BrowserStack SDK.
+
+Bộ 15 case mobile gồm leap year, `29/2`, invalid range, input chữ, và blank field:
+
+| # | Day | Month | Year | Expected |
+|---|---:|---:|---:|---|
+| 1 | 29 | 2 | 2000 | valid |
+| 2 | 29 | 2 | 2004 | valid |
+| 3 | 29 | 2 | 1900 | invalid |
+| 4 | 29 | 2 | 2100 | invalid |
+| 5 | 28 | 2 | 2001 | valid |
+| 6 | 31 | 4 | 2001 | invalid |
+| 7 | 31 | 12 | 2001 | valid |
+| 8 | 0 | 1 | 2000 | invalid |
+| 9 | 32 | 1 | 2000 | invalid |
+| 10 | 1 | 0 | 2000 | invalid |
+| 11 | 1 | 13 | 2000 | invalid |
+| 12 | 1 | 1 | 999 | invalid |
+| 13 | abc | 1 | 2000 | invalid |
+| 14 | 1 | abc | 2000 | invalid |
+| 15 | *(không nhập)* | 1 | 2000 | invalid |
 
 ### Cài đặt env
 
@@ -155,7 +191,6 @@ Không commit credential vào repo. Có thể điền vào file `.env` local:
 BROWSERSTACK_USERNAME=your_username
 BROWSERSTACK_ACCESS_KEY=your_access_key
 BASE_URL=http://localhost:8081
-BROWSERSTACK_MAX_CASES=15
 BROWSERSTACK_DEVICE=iPhone 15
 BROWSERSTACK_OS_VERSION=17
 ```
@@ -175,6 +210,14 @@ Spring Boot phải đang chạy tại `http://localhost:8081`. Script tự bật
 npm run test:mobile
 ```
 
+Terminal sẽ in link dạng:
+
+```text
+Visit https://automation.browserstack.com/builds/<testhub_id> to view build report
+```
+
+Mở link này để xem build report, session, video và logs trên BrowserStack web.
+
 Có thể tạo nhanh `.env` từ mẫu:
 
 ```powershell
@@ -186,13 +229,6 @@ Có thể đổi device/OS nếu BrowserStack account hỗ trợ:
 ```powershell
 $env:BROWSERSTACK_DEVICE="iPhone 15"
 $env:BROWSERSTACK_OS_VERSION="17"
-npm run test:mobile
-```
-
-Mặc định mobile BrowserStack chạy 15 case. Có thể đổi số case khi debug:
-
-```powershell
-$env:BROWSERSTACK_MAX_CASES="5"
 npm run test:mobile
 ```
 
@@ -259,7 +295,9 @@ datetimechecker/
 ├── e2e/
 │   ├── helpers/test-data.js               ← loader test-data.json dùng chung cho các spec
 │   ├── test.spec.js                       ← Playwright E2E tests (Desktop Chrome)
-│   └── browserstack-mobile.js             ← BrowserStack real iPhone Safari smoke/API test
+│   ├── browserstack-mobile.js             ← Selenium helpers cho BrowserStack mobile UI E2E
+│   ├── browserstack-mobile.mocha.js       ← bộ 15 mobile UI E2E cases
+│   └── run-browserstack-mobile.js         ← runner BrowserStack SDK
 ├── k6/
 │   └── load-test.js                       ← k6 load tests
 ├── .github/workflows/
