@@ -124,6 +124,40 @@ Coverage: project **Desktop Chrome** (`test.spec.js`) chạy qua giao diện web
 npx playwright test --project="Desktop Chrome"
 ```
 
+### AI-Assisted Testing với Gemini
+
+Project có generator gọi Gemini API thật để đọc service, UI và test hiện tại, sau
+đó sinh các scenario rủi ro cao thành Playwright test. Gemini trả structured JSON
+theo schema cố định; script kiểm tra dữ liệu trước khi ghi test.
+
+Thêm API key vào file `.env` local (file này đã được Git ignore):
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.5-flash
+```
+
+Khi Spring Boot đang chạy tại `http://localhost:8081`, gọi Gemini và chạy ngay suite
+vừa sinh:
+
+```bash
+npm run test:ai
+```
+
+Muốn review test trước khi chạy, tách thành hai bước:
+
+```bash
+npm run ai:generate
+npm run test:ai:generated
+```
+
+Output AI được ghi vào `e2e/ai-generated.spec.js` và không commit. Suite
+`e2e/ai-assisted.spec.js` là regression baseline đã được con người duyệt. Lệnh AI
+dùng console reporter riêng với progress ngắn gọn và tổng kết pass/fail. Trên Windows,
+Playwright tự dùng Microsoft Edge nếu máy chưa cài Chromium bundled.
+
+Chi tiết thiết kế và xử lý lỗi: [`docs/ai-assisted-testing.md`](docs/ai-assisted-testing.md).
+
 ---
 
 ## 4. Mobile App (Flutter Web)
@@ -295,6 +329,7 @@ datetimechecker/
 ├── e2e/
 │   ├── helpers/test-data.js               ← loader test-data.json dùng chung cho các spec
 │   ├── test.spec.js                       ← Playwright E2E tests (Desktop Chrome)
+│   ├── ai-assisted.spec.js                ← AI-assisted regression baseline đã duyệt
 │   ├── browserstack-mobile.js             ← Selenium helpers cho BrowserStack mobile UI E2E
 │   ├── browserstack-mobile.mocha.js       ← bộ 15 mobile UI E2E cases
 │   └── run-browserstack-mobile.js         ← runner BrowserStack SDK
@@ -304,6 +339,9 @@ datetimechecker/
 │   └── api-test.yml                       ← CI/CD pipeline
 ├── Dockerfile                             ← multi-stage build (Maven → JRE)
 ├── docker-compose.yml                     ← app + e2e-test (Playwright desktop)
+├── scripts/
+│   ├── generate-ai-tests.js               ← gọi Gemini và sinh Playwright scenarios
+│   └── ai-console-reporter.js              ← console reporter riêng cho AI suite
 ├── DateTimeChecker API.postman_collection.json
 ├── generate-test-data.js                  ← sinh test-data.json
 ├── test-data.json

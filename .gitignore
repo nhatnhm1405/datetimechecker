@@ -6,6 +6,7 @@ browserstack.yml
 test-results/
 log/
 playwright-report/
+e2e/ai-generated.spec.js
 .idea/
 *.class
 *.log
